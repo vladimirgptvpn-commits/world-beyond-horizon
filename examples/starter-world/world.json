@@ -1,0 +1,9 @@
+{
+  "world_id": "example-world-001",
+  "world_name": "Мир за горизонтом — пример",
+  "game_time": 0,
+  "locations": [{"id": "village-square", "name": "Деревенская площадь", "description": "Небольшая площадь возле колодца"}],
+  "events": [],
+  "truths": {"magic": "undisclosed; decide before actual play"},
+  "revision": 0
+}
