@@ -4,7 +4,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, readFile, rename } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { createGame, applyAction, parseSimpleCommand, describeScene, FORMAT_VERSION } from './core.mjs';
+import { createGame, applyAction, parseSimpleCommand, describeScene, heroHeading, FORMAT_VERSION } from './core.mjs';
 
 const rl = createInterface({ input, output });
 const ask = prompt => rl.question(prompt);
@@ -25,7 +25,7 @@ try {
     const defining_trait = await ask('5/5 Главная особенность: ');
     const age = /^\d+$/.test(ageText.trim()) ? Number(ageText) : ageText;
     state = createGame({ name, gender, age, origin, defining_trait }, randomUUID());
-    console.log(`Герой: ${state.hero.name}, ${state.hero.age}, ${state.hero.origin}; ${state.hero.defining_trait}.`);
+    console.log(`${heroHeading(state.hero)}: ${state.hero.name}, ${state.hero.age}, ${state.hero.origin}; ${state.hero.defining_trait}.`);
     const confirm = (await ask('Начать приключение? (да/нет): ')).trim().toLocaleLowerCase('ru-RU');
     if (!['да', 'д', 'yes', 'y'].includes(confirm)) { console.log('Создание героя отменено.'); process.exit(0); }
   }
