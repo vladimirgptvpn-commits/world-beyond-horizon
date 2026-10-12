@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, applyAction, parseSimpleCommand, publicState, renderMap } from '../engine/core.mjs';
+import { createGame, applyAction, parseSimpleCommand, publicState, renderMap, grammaticalGender, heroHeading } from '../engine/core.mjs';
 const hero = { name: 'Мирон', gender: 'мужчина', age: 34, origin: 'ремесленник', defining_trait: 'наблюдательность' };
 const make = () => createGame(hero, 'test-1');
 const step = (s, a) => applyAction(s, a).state;
@@ -90,4 +90,26 @@ test('bounded action log does not grow without limit', () => {
   for (let i=0; i<120; i++) s = step(s, { type: 'wait', minutes: 1 });
   assert.ok(s.events.length <= 100);
   assert.equal(s.game_time, 120);
+});
+
+test('female character gets feminine heading and NPC speech', () => {
+  const lisa = createGame({ name: 'Лиза', gender: 'женский', age: 19, origin: 'служанка', defining_trait: 'сексуальность' });
+  assert.equal(heroHeading(lisa.hero), 'Героиня');
+  const spoken = applyAction(lisa, { type: 'talk', npc: 'Ильяна' });
+  assert.ok(spoken.text.includes('не должна'));
+  assert.ok(!spoken.text.includes('не должен'));
+  assert.equal(spoken.state.hero.gender, 'женский');
+  assert.equal(spoken.state.hero.defining_trait, 'сексуальность');
+});
+
+test('male and neutral character speech remains grammatically correct', () => {
+  const man = make();
+  assert.equal(grammaticalGender(man.hero.gender), 'masculine');
+  assert.equal(heroHeading(man.hero), 'Герой');
+  assert.ok(applyAction(man, { type: 'talk', npc: 'Ильяна' }).text.includes('не должен'));
+  const neutral = createGame({ ...hero, name: 'Рен', gender: 'не указан' });
+  assert.equal(heroHeading(neutral.hero), 'Персонаж');
+  const spoken = applyAction(neutral, { type: 'talk', npc: 'Ильяна' }).text;
+  assert.ok(spoken.includes('Но помогать необязательно'));
+  assert.ok(!spoken.includes('не должен') && !spoken.includes('не должна'));
 });
