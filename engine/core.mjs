@@ -19,6 +19,17 @@ const NPC = Object.freeze({
 });
 const LANTERN = ['фонарь', 'фонаря', 'фонарём', 'фонарем'];
 const norm = value => String(value ?? '').trim().toLocaleLowerCase('ru-RU').replace(/[«»"'.,!?]/g, '').replace(/\s+/g, ' ');
+// Grammatical agreement follows the player's own gender entry, not the hero's name.
+export function grammaticalGender(value) {
+  const v = norm(value);
+  if (/^(жен|дев|ж$|female|woman|girl)/.test(v)) return 'feminine';
+  if (/^(муж|пар|м$|male|man|boy)/.test(v)) return 'masculine';
+  return 'neutral';
+}
+export function heroHeading(hero) {
+  const gender = grammaticalGender(hero?.gender);
+  return gender === 'feminine' ? 'Героиня' : gender === 'masculine' ? 'Герой' : 'Персонаж';
+}
 const named = (v, terms) => terms.some(term => norm(v) === term || norm(v).includes(term));
 const clone = obj => structuredClone(obj);
 
@@ -95,7 +106,12 @@ export function applyAction(original, action) {
       spent = 5; changed = true;
       if (id === 'ilyana') {
         if (s.flags.returned_lantern) text = 'Ильяна благодарит тебя и предлагает отдохнуть у очага.';
-        else { text = 'Ильяна рассказывает, что забыла старый фонарь в трактире. «Если найдёшь — буду признательна. Но ты мне ничего не должен». '; s.flags.asked_lantern = true; }
+        else {
+          const gender = grammaticalGender(s.hero.gender);
+          const freeChoice = gender === 'feminine' ? 'Но ты мне ничего не должна' : gender === 'masculine' ? 'Но ты мне ничего не должен' : 'Но помогать необязательно';
+          text = `Ильяна рассказывает, что забыла старый фонарь в трактире. «Если найдёшь — буду признательна. ${freeChoice}». `;
+          s.flags.asked_lantern = true;
+        }
       } else text = 'Данил, трактирщик, говорит: «На опушке под мхом видели старые камни. Не каждому захочется туда идти». ';
       break;
     }
