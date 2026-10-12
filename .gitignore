@@ -1,0 +1,4 @@
+# Local adventure saves (never publish players' private data)
+.saves/
+node_modules/
+*.tmp
