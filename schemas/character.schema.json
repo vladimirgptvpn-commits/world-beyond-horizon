@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Game Character",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "gender", "age", "origin", "defining_trait", "confirmed"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "gender": {"type": "string", "minLength": 1},
+    "age": {"oneOf": [{"type": "integer", "minimum": 0}, {"type": "string", "minLength": 1}]},
+    "origin": {"type": "string", "minLength": 1},
+    "defining_trait": {"type": "string", "minLength": 1},
+    "confirmed": {"type": "boolean"},
+    "description": {"type": "string"},
+    "skills": {"type": "object", "additionalProperties": {"type": "number"}},
+    "inventory": {"type": "array", "items": {"type": "string"}}
+  }
+}
