@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Game World",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["world_id", "world_name", "game_time", "locations", "events", "truths", "revision"],
+  "properties": {
+    "world_id": {"type": "string", "minLength": 1},
+    "world_name": {"type": "string", "minLength": 1},
+    "game_time": {"type": "integer", "minimum": 0, "description": "Игровые минуты с начала мира"},
+    "locations": {"type": "array", "items": {"type": "object"}},
+    "events": {"type": "array", "items": {"type": "object"}},
+    "truths": {"type": "object", "description": "Секретные объективные истины мира"},
+    "revision": {"type": "integer", "minimum": 0}
+  }
+}
