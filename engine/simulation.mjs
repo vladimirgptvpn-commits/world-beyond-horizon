@@ -173,6 +173,7 @@ export function resolveSocietyTurn(original, action) {
     const decision = action.price <= ceiling ? 'accept' :
       action.price <= Math.round(ceiling * 1.7) && ceiling > 0 ? 'counter' : 'refuse';
     const offered = decision === 'accept' ? action.price : decision === 'counter' ? ceiling : null;
+    remember(npc, 'offer', s.turn + 1, { asked: action.price, value: action.value, decision });
     // One unresolved offer per NPC; confirmation must happen immediately.
     npc.memory = npc.memory.filter(m => m.kind !== 'open_offer');
     if (offered !== null) remember(npc, 'open_offer', s.turn + 1,
