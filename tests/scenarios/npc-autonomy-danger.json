@@ -1,0 +1,101 @@
+{
+  "version": "0.1",
+  "status": "manual_behavioral_acceptance_cases_not_executable_engine_tests",
+  "note": "These are scenario expectations for a future motive-driven simulator. The current engine does not implement them.",
+  "cases": [
+    {
+      "id": "merchant-bargains",
+      "setup": "A calculating merchant with a limited budget is offered a service at a high price.",
+      "action": "Player proposes price.",
+      "expected": [
+        "May bargain or refuse according to resources and need.",
+        "Does not accept automatically to please the player."
+      ],
+      "antiPattern": "Immediate generous acceptance with no grounded motivation"
+    },
+    {
+      "id": "prepayment-dispute",
+      "setup": "Two parties have paid in advance for a personal service; the player changes plans.",
+      "action": "Player declines the planned meeting.",
+      "expected": [
+        "The player retains agency over personal contact.",
+        "Parties may dispute refund, reputation or other consequences.",
+        "No invented blanket kindness or automatic immunity from financial consequences."
+      ],
+      "antiPattern": "NPC praises broken agreement and forgets payment; or claims payment grants sexual entitlement"
+    },
+    {
+      "id": "bandit-robbery",
+      "setup": "An isolated traveller encounters three armed bandits seeking valuables.",
+      "action": "Player refuses to surrender purse.",
+      "expected": [
+        "Bandits have plausible incentive to threaten, attack, pursue or retreat.",
+        "Relative force, conditions and player tactics affect outcome.",
+        "Loss, injury or captivity is possible; no automatic rescue."
+      ],
+      "antiPattern": "Bandits immediately offer shelter and safe escort for no reason"
+    },
+    {
+      "id": "outnumbered-fight",
+      "setup": "Unarmed inexperienced player fights three armed assailants without an escape route.",
+      "action": "Player charges opponents.",
+      "expected": [
+        "Victory is not guaranteed and is unlikely without strong external factors.",
+        "Injuries, loss of consciousness, disarmament, capture or death are possible.",
+        "Outcomes persist in health and inventory."
+      ],
+      "antiPattern": "The player trivially wins because they are protagonist"
+    },
+    {
+      "id": "kindness-with-reason",
+      "setup": "A generous innkeeper remembers the player saving her child.",
+      "action": "Player requests a free meal.",
+      "expected": [
+        "Innkeeper may provide meal for a known, consistent personal reason.",
+        "Resources and circumstances still constrain what can be offered."
+      ],
+      "antiPattern": "Prevent all kindness merely to make the world harsh"
+    },
+    {
+      "id": "danger-by-region",
+      "setup": "Road through a guarded town at noon versus isolated forest road at night.",
+      "action": "A lone traveller walks unarmed.",
+      "expected": [
+        "Risk profile differs based on place, time and known local conditions.",
+        "No mandatory attack simply to manufacture drama."
+      ],
+      "antiPattern": "Same fixed random danger regardless of environment"
+    },
+    {
+      "id": "npc-information-limits",
+      "setup": "A merchant has not learned the player's secret plans.",
+      "action": "Player asks whether merchant knows destination.",
+      "expected": [
+        "Merchant only infers from observed clues or prior statements.",
+        "Hidden world facts are not spontaneously quoted."
+      ],
+      "antiPattern": "NPC reads secret narrator state or player intent"
+    },
+    {
+      "id": "death-persists",
+      "setup": "A lethal wound is established and no aid is available.",
+      "action": "Player ignores injury and passes significant time.",
+      "expected": [
+        "Possible death follows world rules.",
+        "Dead hero does not heal by plot convenience.",
+        "A new hero is explicitly created only by player choice."
+      ],
+      "antiPattern": "Narrator cancels mortal consequences without cause"
+    },
+    {
+      "id": "nonhero-collisions",
+      "setup": "Two NPC traders compete for scarce supplies while player watches.",
+      "action": "Player does nothing except wait.",
+      "expected": [
+        "NPC plans and conflicts advance on game-time tick.",
+        "Player is not automatically made centre of the dispute."
+      ],
+      "antiPattern": "NPCs freeze or defer until player gives them a quest"
+    }
+  ]
+}
