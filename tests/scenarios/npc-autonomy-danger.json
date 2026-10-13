@@ -1,7 +1,7 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "status": "manual_behavioral_acceptance_cases_not_executable_engine_tests",
-  "note": "These are scenario expectations for a future motive-driven simulator. The current engine does not implement them.",
+  "note": "These are conceptual acceptance scenarios, not executable tests. No simulator mechanisms for regional risk or brothel economics currently exist.",
   "cases": [
     {
       "id": "merchant-bargains",
@@ -96,6 +96,72 @@
         "Player is not automatically made centre of the dispute."
       ],
       "antiPattern": "NPCs freeze or defer until player gives them a quest"
+    },
+    {
+      "id": "starting-region-social-climate",
+      "setup": "Generate many independent first-time NPC contacts in a peaceful starting village with a 70/30 target; distinguish friendliness, bargaining and physical violence.",
+      "action": "Sample the starting population and revisit some NPCs.",
+      "expected": [
+        "Calibrate broad peaceful vs adverse social climate toward 70/30 without treating 30% as attack probability.",
+        "NPC personality stays stable between repeated contacts; friendly merchants can still bargain.",
+        "Small samples need not meet an exact percentage."
+      ],
+      "antiPattern": "Exactly every third villager attacks, or NPC hostility is rerolled every turn"
+    },
+    {
+      "id": "forest-increased-risk",
+      "setup": "Same unarmed travelling hero enters a known bandit-controlled forest road after leaving a peaceful village.",
+      "action": "Travel at dusk without escort.",
+      "expected": [
+        "Bandit presence, terrain, visibility, local support and witnessed circumstances increase plausible risk.",
+        "Possible intimidation, loss, injury or escape follows the conflict resolution and established facts.",
+        "Unprompted protective rescue is not automatic."
+      ],
+      "antiPattern": "Village safety rate applies everywhere, or bandits become automatic helpers"
+    },
+    {
+      "id": "danger-not-level-scaled",
+      "setup": "Experienced well-equipped hero returns to a peaceful starting village after a long expedition.",
+      "action": "Walk across the familiar town square.",
+      "expected": [
+        "The zone does not spawn elite assailants just to match player strength.",
+        "Known local events may legitimately change the level of danger.",
+        "Previous ordinary local threats may now be easier for the hero."
+      ],
+      "antiPattern": "Every place increases enemy strength solely according to player level"
+    },
+    {
+      "id": "brothel-work-not-romance",
+      "setup": "Adult heroine applies for work in an urban brothel with fixed management policies, competitors, clients and operating costs.",
+      "action": "Ask about work terms, payment and housing.",
+      "expected": [
+        "Employer weighs revenue, expenses, rules and risk; may negotiate, refuse, charge fees or make exploitative offers.",
+        "Clients and staff have varied motivations; no automatic romantic interest, gifts or protection.",
+        "Ledger records prices, deductions, shifts and liabilities."
+      ],
+      "antiPattern": "Everyone flatters the player and offers free housing and unconditional protection"
+    },
+    {
+      "id": "brothel-power-imbalance",
+      "setup": "Adult heroine negotiates with a manager who has market power and can impose unfair costs.",
+      "action": "Disputes an invented deduction and considers leaving.",
+      "expected": [
+        "Risk of wage dispute, pressure, exclusion, dishonest accounting or retaliation depends on known people and institutions.",
+        "Hero can negotiate, seek allies, leave or respond; success is not guaranteed.",
+        "Sexual violence is not presumed inevitable or graphically narrated."
+      ],
+      "antiPattern": "Manager forgives every debt out of affection, or harming the heroine is a fixed storyline requirement"
+    },
+    {
+      "id": "kind-person-in-dangerous-place",
+      "setup": "A compassionate NPC lives near a bandit camp but lacks money and protection.",
+      "action": "Hero asks for help while pursued.",
+      "expected": [
+        "NPC may offer constrained assistance if motivated but must consider personal risk.",
+        "The presence of evil actors does not make everyone hostile.",
+        "Outcome persists and may bring later consequences for helper."
+      ],
+      "antiPattern": "All NPCs in dangerous zone attack automatically"
     }
   ]
 }
