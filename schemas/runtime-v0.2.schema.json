@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "World Beyond Horizon Reference Runtime State v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format_version",
+    "adventure_id",
+    "world_id",
+    "revision",
+    "turn",
+    "game_time",
+    "location_id",
+    "hero",
+    "discovered",
+    "visited",
+    "world_truths",
+    "npc_locations",
+    "item_locations",
+    "flags",
+    "reputation",
+    "events",
+    "journal"
+  ],
+  "properties": {
+    "format_version": {
+      "const": "0.2.0"
+    },
+    "adventure_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "world_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "turn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "game_time": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "location_id": {
+      "enum": [
+        "square",
+        "inn",
+        "forest",
+        "tower"
+      ]
+    },
+    "hero": {
+      "type": "object",
+      "required": [
+        "name",
+        "gender",
+        "age",
+        "origin",
+        "defining_trait",
+        "inventory"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gender": {
+          "type": "string",
+          "minLength": 1
+        },
+        "age": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defining_trait": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "discovered": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "visited": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "world_truths": {
+      "type": "object",
+      "required": [
+        "magic_exists",
+        "magic_rule"
+      ]
+    },
+    "npc_locations": {
+      "type": "object",
+      "required": [
+        "ilyana",
+        "danil"
+      ]
+    },
+    "item_locations": {
+      "type": "object",
+      "required": [
+        "lantern"
+      ]
+    },
+    "flags": {
+      "type": "object",
+      "required": [
+        "found_path",
+        "asked_lantern",
+        "returned_lantern"
+      ]
+    },
+    "reputation": {
+      "type": "integer"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "maxItems": 100
+    },
+    "journal": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "society": {
+      "$ref": "society-v0.3.schema.json"
+    }
+  }
+}
