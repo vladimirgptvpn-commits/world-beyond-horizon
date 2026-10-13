@@ -122,11 +122,22 @@ export function resolveSocietyTurn(original, action) {
         break;
       }
     }
-    event(s, { type: 'travel', from, to: action.to, threat: !!threat });
+    // Environmental hazards are independent from human morality or NPC stance.
+    // Only one major incident is resolved per transition to keep outcomes traceable.
+    let accident = null;
+    if (!threat && stableRoll(s.seed, `hazard:${action.to}:${s.turn + 1}`) <
+      s.regions[action.to].hazard * .22) {
+      const damage = Math.max(1, Math.ceil(s.regions[action.to].hazard * 3));
+      s.player.health = Math.max(0, s.player.health - damage);
+      s.player.injuries.push({ turn: s.turn + 1, damage, cause: 'environment' });
+      accident = { damage };
+    }
+    event(s, { type: 'travel', from, to: action.to, threat: !!threat, accident });
     return good(s, threat
       ? `${s.npcs[threat.npcId].name} преграждает путь и требует ${threat.demand} монет. Можно откупиться, бежать или сопротивляться.`
-      : 'Переход завершён; опасность не обязана обернуться нападением.', threat ? 'threat' : 'travel',
-      threat ? { npcId: threat.npcId, demand: threat.demand } : null);
+      : accident ? `В пути возникает природная опасность: получена травма, потеряно ${accident.damage} здоровья.` :
+      'Переход завершён без происшествий.', threat ? 'threat' : accident ? 'injury' : 'travel',
+      threat ? { npcId: threat.npcId, demand: threat.demand } : accident);
   }
   if (kind === 'pay_demand' || kind === 'flee') {
     if (!s.activeThreat) return bad(original, 'No active threat');
@@ -149,7 +160,7 @@ export function resolveSocietyTurn(original, action) {
     }
     event(s, { type: 'flee', npcId: npc.id, escaped: escape, health: s.player.health });
     return good(s, escape ? 'Удаётся скрыться от преследователя.' :
-      s.player.health ? 'Побег сорвался, получена травма. Противник ещё рядом.' : 'Герой погиб от полученных травм.',
+      s.player.health ? 'Побег сорвался, получена травма. Противник ещё рядом.' : 'Здоровье упало до нуля; приключение завершено.',
       escape ? 'escaped' : 'caught');
   }
   const npc = s.npcs[action.npcId];
@@ -232,7 +243,7 @@ export function resolveSocietyTurn(original, action) {
     event(s, { type: 'fight', npcId: npc.id, heroWonExchange: won, damage,
       playerHealth: s.player.health, npcHealth: npc.health });
     return good(s, won ? `${npc.name} получает рану, противник отступает после удара.` :
-      s.player.health ? `Герой ранен и теряет ${damage} здоровья.` : 'Герой погиб от ран.',
+      s.player.health ? `Получена рана, потеряно ${damage} здоровья.` : 'Здоровье упало до нуля; приключение завершено.',
       won ? 'npc_injured' : 'player_injured');
   }
   return bad(original, 'Unknown encounter action');
