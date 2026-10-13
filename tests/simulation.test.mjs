@@ -186,3 +186,30 @@ test('generic simulation works in custom region with custom employer, without sp
   assert.equal(offer.state.player.coins, 2);
   assert.ok(offer.state.npcs.manager.memory.some(m => m.kind === 'offer'));
 });
+
+test('repeated rejected unreasonable offers affect trust without creating money', () => {
+  let s = createSociety('refusals');
+  const coins = s.npcs.danil.coins;
+  const first = run(s, { kind: 'offer', npcId: 'danil', price: 200, value: 1 });
+  const second = run(first.state, { kind: 'offer', npcId: 'danil', price: 200, value: 1 });
+  assert.equal(first.outcome, 'refuse');
+  assert.equal(second.outcome, 'refuse');
+  assert.ok(second.state.npcs.danil.relationship < first.state.npcs.danil.relationship);
+  assert.equal(second.state.npcs.danil.coins, coins);
+  assert.equal(second.state.player.coins, 0);
+});
+
+test('regional environmental hazards can cause persistent injury without turning NPCs evil', () => {
+  let accidents = 0, safe = 0;
+  for (let i = 0; i < 120; i++) {
+    const s = createSociety(`weather-${i}`);
+    const outcome = run(s, { kind: 'travel', to: 'forest' });
+    if (outcome.outcome === 'injury') {
+      accidents++;
+      assert.ok(outcome.state.player.health < s.player.health);
+      assert.ok(outcome.state.player.injuries.some(x => x.cause === 'environment'));
+    } else if (outcome.outcome === 'travel') safe++;
+    assert.equal(s.player.health, 10);
+  }
+  assert.ok(accidents > 0 && safe > 0, `accidents=${accidents}, safe=${safe}`);
+});
