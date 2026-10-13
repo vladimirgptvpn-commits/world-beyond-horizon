@@ -158,6 +158,9 @@
       "items": {
         "type": "string"
       }
+    },
+    "society": {
+      "$ref": "society-v0.3.schema.json"
     }
   }
 }
