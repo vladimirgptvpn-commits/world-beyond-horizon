@@ -113,3 +113,74 @@ test('male and neutral character speech remains grammatically correct', () => {
   assert.ok(spoken.includes('Но помогать необязательно'));
   assert.ok(!spoken.includes('не должен') && !spoken.includes('не должна'));
 });
+
+test('new games include stable simulation state but public view hides NPC plans and traits', () => {
+  const game = make();
+  assert.equal(game.society.version, '0.3.0');
+  assert.equal(game.society.regions.village.peacefulShare, .7);
+  const publicView = publicState(game);
+  assert.ok(!('society' in publicView));
+  assert.ok(!JSON.stringify(publicView).includes('obtain_valuables'));
+  assert.equal(publicView.public_society.health, 10);
+  assert.equal(publicView.public_society.coins, 0);
+});
+
+test('trade interactions require an NPC to be present and keep old movement rules', () => {
+  let game = make();
+  assert.equal(applyAction(game, { type: 'interact', kind: 'offer', npc: 'Данил', price: 20, value: 10 }).ok, false);
+  game = step(game, { type: 'go', destination: 'трактир' });
+  const negotiated = applyAction(game, { type: 'interact', kind: 'offer', npc: 'Данил', price: 9, value: 12 });
+  assert.ok(negotiated.ok);
+  assert.equal(negotiated.state.society.npcs.danil.memory.some(m => m.kind === 'offer'), true);
+  assert.equal(negotiated.state.game_time, 15);
+  assert.equal(game.game_time, 10);
+});
+
+test('legacy v0.2 save without society upgrades lazily, preserving the hero', () => {
+  const legacy = make();
+  delete legacy.society;
+  const restored = JSON.parse(JSON.stringify(legacy));
+  assert.equal(applyAction(restored, { type: 'look' }).state.society, undefined);
+  const moved = applyAction(restored, { type: 'go', destination: 'лес' });
+  assert.equal(moved.ok, true);
+  assert.equal(moved.state.society.version, '0.3.0');
+  assert.equal(moved.state.society.regionId, 'forest');
+  assert.deepEqual(moved.state.hero, legacy.hero);
+  assert.equal(moved.state.format_version, '0.2.0');
+});
+
+test('exploration can reach dangerous area with actual ambush and escape options', () => {
+  let threatGame = null;
+  for (let i = 0; i < 80; i++) {
+    let game = createGame(hero, `encounter-sample-${i}`);
+    game.society.player.coins = 4;
+    game = step(game, { type: 'go', destination: 'лес' });
+    game = step(game, { type: 'explore' });
+    const moved = applyAction(game, { type: 'go', destination: 'башня' });
+    if (moved.ok && moved.state.society.activeThreat) { threatGame = moved.state; break; }
+  }
+  assert.ok(threatGame);
+  assert.equal(threatGame.location_id, 'tower');
+  assert.equal(applyAction(threatGame, { type: 'go', destination: 'лес' }).ok, false);
+  const payment = applyAction(threatGame, { type: 'interact', kind: 'pay_demand' });
+  assert.equal(payment.ok, true);
+  assert.equal(payment.state.society.activeThreat, null);
+  assert.ok(payment.state.society.player.coins < threatGame.society.player.coins);
+});
+
+test('persistent injury from attack is visible without revealing hidden NPC state', () => {
+  let injured = null;
+  for (let i = 0; i < 80; i++) {
+    let game = createGame(hero, `fight-example-${i}`);
+    game = step(game, { type: 'go', destination: 'лес' });
+    game = step(game, { type: 'explore' });
+    game = step(game, { type: 'go', destination: 'башня' });
+    const attack = applyAction(game, { type: 'interact', kind: 'attack', npc: 'Главарь шайки' });
+    if (attack.ok && attack.state.society.player.health < game.society.player.health) {
+      injured = attack.state; break;
+    }
+  }
+  assert.ok(injured);
+  assert.ok(publicState(injured).public_society.injuries.length > 0);
+  assert.equal(publicState(injured).society, undefined);
+});
