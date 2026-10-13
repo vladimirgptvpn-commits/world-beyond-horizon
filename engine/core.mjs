@@ -82,6 +82,9 @@ function resolveNpc(value) {
 function describe(state) {
   const place = PLACES[state.location_id];
   const people = Object.entries(state.npc_locations).filter(([, p]) => p === state.location_id).map(([id]) => NPC[id].name);
+  if (state.society?.activeThreat && state.location_id === 'tower') {
+    people.push(state.society.npcs[state.society.activeThreat.npcId]?.name || 'угрожающий незнакомец');
+  }
   const items = state.item_locations.lantern === state.location_id ? ['фонарь'] : [];
   const exits = place.exits.filter(id => state.discovered.includes(id)).map(id => PLACES[id].name);
   return `${place.name}. ${place.text}\nРядом: ${people.join(', ') || 'никого'}. Предметы: ${items.join(', ') || 'нет'}.\nПути: ${exits.join('; ') || 'неизвестны'}.`;
