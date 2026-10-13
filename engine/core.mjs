@@ -1,4 +1,5 @@
-// World Beyond Horizon v0.2: deterministic reference game engine.
+import { createSociety, resolveSocietyTurn } from './simulation.mjs';
+// World Beyond Horizon v0.2: deterministic reference game engine, v0.3 society module.
  // ChatGPT can map free text to structured actions; this file itself is not an LLM.
 export const FORMAT_VERSION = '0.2.0';
 const PLACES = Object.freeze({
@@ -32,6 +33,25 @@ export function heroHeading(hero) {
 }
 const named = (v, terms) => terms.some(term => norm(v) === term || norm(v).includes(term));
 const clone = obj => structuredClone(obj);
+const regionFor = place => place === 'forest' ? 'forest' : place === 'tower' ? 'deep_forest' : 'village';
+function societyFor(state) {
+  if (state.society) return state.society;
+  // Backward-compatible lazy upgrade of older v0.2 adventure snapshots.
+  const simulation = createSociety(state.adventure_id);
+  simulation.regionId = regionFor(state.location_id);
+  simulation.turn = state.turn;
+  return simulation;
+}
+function actorHere(state, id) {
+  if (id === 'ilyana' || id === 'danil') return state.npc_locations[id] === state.location_id;
+  return id === 'bandit' && state.location_id === 'tower';
+}
+function identifySocietyNpc(state, name) {
+  const text = norm(name);
+  const soc = societyFor(state);
+  return Object.keys(soc.npcs).find(id => id === text ||
+    norm(soc.npcs[id].name) === text || norm(text).includes(norm(soc.npcs[id].name))) || null;
+}
 
 export function createGame(hero, adventureId = 'local-demo') {
   if (!hero || typeof hero !== 'object') throw new Error('Требуются ответы для создания героя');
@@ -42,6 +62,7 @@ export function createGame(hero, adventureId = 'local-demo') {
     format_version: FORMAT_VERSION, adventure_id: adventureId, world_id: 'starter-village-001',
     revision: 0, turn: 0, game_time: 0, location_id: 'square',
     hero: { name: name.trim(), gender: gender.trim(), age, origin: origin.trim(), defining_trait: defining_trait.trim(), inventory: [] },
+    society: createSociety(adventureId),
     discovered: ['square', 'inn', 'forest'], visited: ['square'],
     world_truths: { magic_exists: true, magic_rule: 'Чудеса редки и связаны с древними местами; обычные люди не умеют произвольно колдовать.' },
     npc_locations: { ilyana: 'square', danil: 'inn' },
@@ -73,13 +94,24 @@ export function renderMap(state) {
   })].join('\n');
 }
 export function publicState(state) {
-  const { world_truths, ...rest } = state;
+  const { world_truths, society, ...rest } = state;
+  // Never leak private NPC motives, schedules, inventories or world profiles.
+  if (society) rest.public_society = {
+    health: society.player.health, coins: society.player.coins,
+    injuries: clone(society.player.injuries),
+    threat: society.activeThreat ? {
+      npc: society.npcs[society.activeThreat.npcId]?.name,
+      demand: society.activeThreat.demand
+    } : null
+  };
   return clone(rest);
 }
 // Validate one structured action. Invalid actions never advance time.
 export function applyAction(original, action) {
   if (!original || original.format_version !== FORMAT_VERSION) throw new Error('Несовместимое состояние игры');
   if (!action || typeof action.type !== 'string') return { state: original, text: 'Не поняла действие. Уточни, что ты делаешь.', ok: false };
+  if (original.society?.player?.health === 0 && !['look','map','status','journal'].includes(action.type))
+    return { state: original, text: 'История этого героя завершилась. Начни новое приключение.', ok: false };
   const s = clone(original);
   const type = action.type;
   let spent = 0, changed = false, text = '';
@@ -88,7 +120,11 @@ export function applyAction(original, action) {
     case 'look': text = describe(s); break;
     case 'map': text = renderMap(s); break;
     case 'inventory': text = `Инвентарь: ${s.hero.inventory.join(', ') || 'пусто'}.`; break;
-    case 'status': text = `${s.hero.name}, ${s.hero.origin}. Время: ${s.game_time} мин. Место: ${PLACES[s.location_id].name}. Репутация: ${s.reputation}.`; break;
+    case 'status': {
+      const sc = societyFor(s);
+      text = `${s.hero.name}, ${s.hero.origin}. Время: ${s.game_time} мин. Место: ${PLACES[s.location_id].name}. Репутация: ${s.reputation}. Здоровье: ${sc.player.health}. Медяки: ${sc.player.coins}.`;
+      break;
+    }
     case 'journal': text = s.journal.join('\n') || 'Записей пока нет.'; break;
     case 'help': text = 'Примеры: осмотреться, карта, идти в трактир, говорить с Ильяной, взять фонарь, отдать фонарь Ильяне, исследовать, ждать 30, инвентарь, журнал.'; break;
     case 'go': {
@@ -96,9 +132,18 @@ export function applyAction(original, action) {
       if (!to) return fail('Такого места пока нет на известной карте.');
       if (!PLACES[s.location_id].exits.includes(to)) return fail('Отсюда нет прямого пути в указанное место.');
       if (!s.discovered.includes(to)) return fail('Путь ещё не открыт. Можно исследовать окрестности.');
+      let travelText = '';
+      if (regionFor(to) !== regionFor(s.location_id)) {
+        const soc = societyFor(s);
+        soc.turn = s.turn;
+        const travel = resolveSocietyTurn(soc, { kind: 'travel', to: regionFor(to), minutes: s.game_time + 10 });
+        if (!travel.ok) return fail(travel.text);
+        s.society = travel.state;
+        if (travel.outcome === 'threat') travelText = travel.text;
+      }
       s.location_id = to;
       if (!s.visited.includes(to)) s.visited.push(to);
-      spent = 10; changed = true; text = 'Ты добираешься до нового места.'; break;
+      spent = 10; changed = true; text = 'Ты добираешься до нового места.' + (travelText ? '\n' + travelText : ''); break;
     }
     case 'talk': {
       const id = resolveNpc(action.npc);
@@ -141,6 +186,22 @@ export function applyAction(original, action) {
       s.journal.push('Ты вернул фонарь Ильяне. Она запомнила эту помощь.');
       spent = 5; changed = true; text = 'Ильяна принимает фонарь и улыбается. Теперь она тебе доверяет немного больше.'; break;
     }
+    case 'interact': {
+      const kind = action.kind;
+      if (!['offer','accept_offer','ask_help','cancel_contract','flee','pay_demand','attack'].includes(kind))
+        return fail('Такое взаимодействие пока не поддерживается.');
+      const actorId = kind === 'flee' || kind === 'pay_demand' ? undefined : identifySocietyNpc(s, action.npc || action.npcId);
+      if (actorId && !actorHere(s, actorId)) return fail('Этот персонаж не находится рядом.');
+      const soc = societyFor(s);
+      soc.turn = s.turn;
+      const outcome = resolveSocietyTurn(soc, { ...action, kind, npcId: actorId });
+      if (!outcome.ok) return fail(outcome.text);
+      s.society = outcome.state;
+      if (kind === 'flee' && outcome.outcome === 'escaped') s.location_id = 'forest';
+      spent = kind === 'attack' ? 2 : 5;
+      changed = true; text = outcome.text;
+      break;
+    }
     case 'wait': {
       const minutes = Number(action.minutes);
       if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return fail('Укажи ожидание от 1 до 1440 минут.');
@@ -151,6 +212,7 @@ export function applyAction(original, action) {
   if (changed) {
     const oldTime = s.game_time;
     s.game_time += spent; s.turn += 1; s.revision += 1;
+    if (s.society) s.society.turn = s.turn;
     if (oldTime < 60 && s.game_time >= 60 && s.npc_locations.ilyana === 'square') {
       s.npc_locations.ilyana = 'inn';
       s.events.push({ at: 60, type: 'npc_move', npc: 'ilyana', from: 'square', to: 'inn' });
